@@ -1,0 +1,14 @@
+[project]
+name = "yt-video-note"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "dotenv>=0.9.9",
+    "ffmpeg-python>=0.2.0",
+    "langchain[openai]>=0.3.26",
+    "langgraph>=0.5.3",
+    "openai-whisper>=20250625",
+    "rich>=14.0.0",
+    "yt-dlp>=2025.6.30",
+]
