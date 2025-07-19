@@ -8,6 +8,7 @@ dependencies = [
     "ffmpeg-python>=0.2.0",
     "langchain[openai]>=0.3.26",
     "langgraph>=0.5.3",
+    "mlx-whisper>=0.4.2",
     "openai-whisper>=20250625",
     "rich>=14.0.0",
     "yt-dlp>=2025.6.30",

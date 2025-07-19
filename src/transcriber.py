@@ -4,6 +4,9 @@ import tempfile
 import ffmpeg
 from typing import Union, Optional, Dict, Any
 
+import mlx_whisper
+
+
 class Transcriber:
     """
     A class to handle video transcription using OpenAI's Whisper model.
@@ -14,18 +17,22 @@ class Transcriber:
     - openai-whisper (needs to be installed: pip install openai-whisper)
     """
 
-    def __init__(self, ffmpeg_path: Union[str, None] = None, model_size: str = "large-v3-turbo"):
+    def __init__(self, ffmpeg_path: Union[str, None] = None, model_name: str = "large-v3-turbo"):
         """
         Initializes the Transcriber class.
 
         Args:
             ffmpeg_path (Union[str, None]): Path to the ffmpeg executable. If None, it will use the system's default.
-            model_size (str): Size of the Whisper model to use. Options: "tiny", "base", "small", "medium", "large".
+            model_name (str): Size of the Whisper model to use. Options: "tiny", "base", "small", "medium", "large".
                               Default: "large-v3-turbo".
         """
         self._ffmpeg_path = ffmpeg_path or "ffmpeg"
-        self._model_size = model_size
+        self._model_name = model_name
         self._whisper_model = None  # Lazy-loaded when needed
+        self._mlx_whisper = os.environ.get("MLX_WHISPER", "True").lower() == "true"
+
+        if self._mlx_whisper:
+            self._model_name = "mlx-community/whisper-large-v3-mlx"
 
     async def _load_whisper_model(self):
         """
@@ -46,7 +53,7 @@ class Transcriber:
             # Load the model in a separate thread to avoid blocking the event loop
             loop = asyncio.get_event_loop()
             self._whisper_model = await loop.run_in_executor(
-                None, lambda: whisper.load_model(self._model_size)
+                None, lambda: whisper.load_model(self._model_name)
             )
 
     async def _extract_audio(self, media_path: str) -> str:
@@ -113,6 +120,9 @@ class Transcriber:
             ImportError: If the whisper package is not installed.
             RuntimeError: If transcription fails.
         """
+        if self._mlx_whisper:
+            return await self.transcribe_with_timestamps_mlx(video_path, language)
+
         # Check if the media file exists
         if not os.path.exists(video_path):
             raise FileExistsError(f"media file not found: {video_path}")
@@ -134,6 +144,37 @@ class Transcriber:
             result = await loop.run_in_executor(
                 None,
                 lambda: self._whisper_model.transcribe(audio_path, **options)
+            )
+
+            return result
+
+        finally:
+            # Clean up the temporary audio file
+            if os.path.exists(audio_path):
+                os.unlink(audio_path)
+
+    async def transcribe_with_timestamps_mlx(self, video_path: str, language: Optional[str] = None)->Dict[str,Any]:
+        # Check if the media file exists
+        if not os.path.exists(video_path):
+            raise FileExistsError(f"media file not found: {video_path}")
+
+        # Load the Whisper model
+        mlx_whisper.load_models.load_model(self._model_name)
+
+        # Extract audio from the video
+        audio_path = await self._extract_audio(video_path)
+
+        try:
+            # Prepare transcription options
+            options: Dict[str, Any] = {}
+            if language:
+                options["language"] = language
+
+            # Run transcription in a separate thread to avoid blocking the event loop
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                None,
+                lambda: mlx_whisper.transcribe(audio_path, path_or_hf_repo=self._model_name, word_timestamps=True, **options)
             )
 
             return result
