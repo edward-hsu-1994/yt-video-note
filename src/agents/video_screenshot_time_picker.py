@@ -20,6 +20,9 @@ class VideoScreenshotTimePicker:
             identify specific timestamps or time ranges in the video where taking screenshots would most 
             enhance or supplement the summary. For each suggested timestamp, briefly explain why the 
             visual from that moment would be valuable in reinforcing or clarifying the summary content. 
+            
+            If you think the time range for capturing a screenshot exceeds five seconds, you may select
+            multiple time points in order to obtain more complete images.
             """,
             tools=[],
             response_format=VideoScreenshotTimes

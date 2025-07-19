@@ -32,15 +32,16 @@ class VideoSummitNote:
         self.enhance_agent = create_react_agent(
             model=llm,
             prompt="""
-            Based on the original summary content, extend and enrich it by incorporating 
-            information from the video transcript and appropriately selected user-provided 
-            images. Evaluate each image to determine its relevance and value before including 
-            it in the Markdown summary. There is no need to mention that the content is 
-            enhanced or expanded. You may insert images only within the content, not in the 
-            headings. If the summary includes bullet points, do not place images at the 
-            beginning of a bullet point; instead, insert them on a new line within the list.
+            Incorporate user-provided images into the original summary content by carefully 
+            evaluating each image for relevance and contextual value. Integrate these images 
+            at suitable locations within the summary to enrich its content. Images should not 
+            be added to the beginning of bullet points, but may be inserted on a new line within 
+            lists as appropriate. Do not create a separate or new summary; instead, enhance the 
+            existing user summary by seamlessly blending relevant images. Use Markdown syntax 
+            to add images, and only include them within the body of the summary, not in headings.
             
-            Please select appropriate images in suitable places and insert them using Markdown syntax.
+            If the images are similar, you only need to insert the relatively more complete one. 
+            There is no need to include all of them.
             """,
             tools=[],
             response_format=SummitNoteOutput
@@ -93,7 +94,13 @@ Existing Summary:
 {exists_summary}
 ```
 """),
-                *image_message
+                *image_message,
+                HumanMessage(
+                    """Please reasonably integrate these images into the summary 
+                    I provided using Markdown syntax, with my content as the primary basis.
+                    Do not use `Front Matter` format.
+                    """
+                )
             ]
         }
 
