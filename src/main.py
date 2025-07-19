@@ -50,22 +50,35 @@ async def main():
         await yt_downloader.download(url, video_path)
         console.print("Video downloaded successfully.", style="green")
 
-
-    console.print(f"Transcribe video...")
     transcribe_path = f"./results/{video_info['id']}/transcription.txt"
-
     transcribe = ""
-    if os.path.exists(transcribe_path):
-        console.print(f"Transcription already exists. Skipping transcription.", style="yellow")
+    if "subtitles" in video_info and len(video_info["subtitles"]) > 0:
+        console.print(f"Downloading subtitles...")
+        orig_lang = next(iter(video_info["subtitles"]))
+        if os.path.exists(transcribe_path):
+            console.print(f"Transcription already exists. Skipping transcription.", style="yellow")
 
-        with open(transcribe_path, 'r', encoding='utf-8') as f:
-            transcribe = f.read()
-            console.print(f"Transcription loaded from {transcribe_path}", style="green")
+            with open(transcribe_path, 'r', encoding='utf-8') as f:
+                transcribe = f.read()
+                console.print(f"Transcription loaded from {transcribe_path}", style="green")
+        else:
+            transcribe = await yt_downloader.download_subtitle(url, orig_lang)
+            with open(transcribe_path, 'w', encoding='utf-8') as f:
+                f.write(transcribe)
+                console.print(f"Transcription saved to {transcribe_path}", style="green")
     else:
-        transcribe = await transcriber.transcribe_with_timestamps_str(video_path)
-        with open(transcribe_path, 'w', encoding='utf-8') as f:
-            f.write(transcribe)
-            console.print(f"Transcription saved to {transcribe_path}", style="green")
+        console.print(f"Transcribe video...")
+        if os.path.exists(transcribe_path):
+            console.print(f"Transcription already exists. Skipping transcription.", style="yellow")
+
+            with open(transcribe_path, 'r', encoding='utf-8') as f:
+                transcribe = f.read()
+                console.print(f"Transcription loaded from {transcribe_path}", style="green")
+        else:
+            transcribe = await transcriber.transcribe_with_timestamps_str(video_path)
+            with open(transcribe_path, 'w', encoding='utf-8') as f:
+                f.write(transcribe)
+                console.print(f"Transcription saved to {transcribe_path}", style="green")
 
     console.print(f"Generate video summary...")
     summary_content = ""

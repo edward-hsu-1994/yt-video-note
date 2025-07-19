@@ -42,6 +42,10 @@ class VideoSummitNote:
             
             If the images are similar, you only need to insert the relatively more complete one. 
             There is no need to include all of them.
+            
+            You can skip images that don’t enhance the content, such as visuals that are completely
+            unrelated to the topic. In most cases, the useful images are diagrams, slides, schematics,
+            or narrative photos that help illustrate and explain the content.
             """,
             tools=[],
             response_format=SummitNoteOutput
