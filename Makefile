@@ -4,4 +4,4 @@ restore:
 
 .PHONY: run
 run:
-	./.venv/bin/python -m src.main
+	python -m src.main
